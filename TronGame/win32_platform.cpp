@@ -74,6 +74,19 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 	Input input = {};
 
+	//
+	float delta_time = 0.016666f;
+	LARGE_INTEGER frame_begin_time;
+	QueryPerformanceCounter(&frame_begin_time);
+
+	float performance_frequency; {
+		LARGE_INTEGER perf;
+		QueryPerformanceFrequency(&perf);
+		performance_frequency = (float)perf.QuadPart;
+	}
+
+
+	//Begin game loop
 	while (running) {
 		//inputs
 		MSG message;
@@ -112,7 +125,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 
 		//Simulate - All game functions will be done here. It simulates what happens and what should be shown.
-		simulate_game(&input);
+		simulate_game(&input, delta_time);
 		
 		
 		
@@ -122,5 +135,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 		//Render
 		StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
+
+		//Gets the end frame data and caculates how long it took to render a frame. This keep movement speed consistent when resizing the window
+		LARGE_INTEGER frame_end_time;
+		QueryPerformanceCounter(&frame_end_time);
+		delta_time = (float)(frame_end_time.QuadPart - frame_begin_time.QuadPart) / performance_frequency;
+		frame_begin_time = frame_end_time;
+
 	}
 };
