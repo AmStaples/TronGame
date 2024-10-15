@@ -1,12 +1,20 @@
 #include <Windows.h>
+#include "utils.cpp"
 
+struct Render_State {
+	int height, width;
+	void* memory;
+	BITMAPINFO bitmapinfo;
+};
 
+global_variable Render_State render_state;
 
-bool running = true;
-void* buffer_memory;
-int buffer_width;
-int buffer_height;
-BITMAPINFO buffer_bitmap_info;
+#include "renderer.cpp"
+/*
+Since we include renderer.cpp AFTER creating render_state, the renderer.cpp can use render_state without passing variables.
+*/
+global_variable bool running = true;
+
 
 LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	LRESULT result = 0;
@@ -19,19 +27,19 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	case WM_SIZE: {
 		RECT rect;
 			GetClientRect(hwnd, &rect);
-			buffer_width = rect.right - rect.left;
-			buffer_height = rect.bottom - rect.top;
+			render_state.width = rect.right - rect.left;
+			render_state.height = rect.bottom - rect.top;
 
-			int buffer_size = buffer_width * buffer_height * sizeof(unsigned int);
+			int buffer_size = render_state.width * render_state.height * sizeof(u32);
 
-			if (buffer_memory) VirtualFree(buffer_memory, 0, MEM_RELEASE);
-			buffer_memory = VirtualAlloc(0, buffer_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-			buffer_bitmap_info.bmiHeader.biSize = sizeof(buffer_bitmap_info.bmiHeader);
-			buffer_bitmap_info.bmiHeader.biWidth = buffer_width;
-			buffer_bitmap_info.bmiHeader.biHeight = buffer_height;
-			buffer_bitmap_info.bmiHeader.biPlanes = 1;
-			buffer_bitmap_info.bmiHeader.biBitCount = 32;
-			buffer_bitmap_info.bmiHeader.biCompression = BI_RGB;
+			if (render_state.memory) VirtualFree(render_state.memory, 0, MEM_RELEASE);
+			render_state.memory = VirtualAlloc(0, buffer_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+			render_state.bitmapinfo.bmiHeader.biSize = sizeof(render_state.bitmapinfo.bmiHeader);
+			render_state.bitmapinfo.bmiHeader.biWidth = render_state.width;
+			render_state.bitmapinfo.bmiHeader.biHeight = render_state.height;
+			render_state.bitmapinfo.bmiHeader.biPlanes = 1;
+			render_state.bitmapinfo.bmiHeader.biBitCount = 32;
+			render_state.bitmapinfo.bmiHeader.biCompression = BI_RGB;
 			
 	} break;
 	
@@ -62,14 +70,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 			TranslateMessage(&message);
 			DispatchMessage(&message);
 		}
-		//Simulate
-		unsigned int* pixel = (unsigned int*)buffer_memory;
-		for (int y = 0; y < buffer_height; y++) {
-			for (int x = 0; x < buffer_width; x++) {
-				*pixel++ = x*y;
-			}
-		}
+
+
+		//Simulate - All game functions will be done here. It simulates what happens and what should be shown.
+		clear_screen(); //Clears the previous frame by rendering a new background over the previouse frame "clearing" the screen
+		draw_rect(0, 0, 1, 1, 0xff0000);
+
+
+
 		//Render
-		StretchDIBits(hdc, 0, 0, buffer_width, buffer_height, 0, 0, buffer_width, buffer_height, buffer_memory, &buffer_bitmap_info, DIB_RGB_COLORS, SRCCOPY);
+		StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
 	}
 };
