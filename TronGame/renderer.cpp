@@ -4,7 +4,7 @@ internal void clear_screen() { //Also renders background
 	u32* pixel = (unsigned int*)render_state.memory;
 	for (int y = 0; y < render_state.height; y++) {
 		for (int x = 0; x < render_state.width; x++) {
-			*pixel++ = (0x00ff00 * x) + (y * 0xff00ff);
+			*pixel++ = (0x00ff00 * x * y) + (y * 0xff00ff * x);
 		}
 	}
 }

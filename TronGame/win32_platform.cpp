@@ -9,6 +9,7 @@ struct Render_State {
 
 global_variable Render_State render_state;
 
+#include "platform_common.cpp"
 #include "renderer.cpp"
 /*
 Since we include renderer.cpp AFTER creating render_state, the renderer.cpp can use render_state without passing variables.
@@ -63,18 +64,52 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	//Create Window
 	HWND window = CreateWindow(window_class.lpszClassName, L"My First Game!", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
 	HDC hdc = GetDC(window);
+
+	Input input = {};
+
 	while (running) {
 		//inputs
 		MSG message;
+
+		for (int i = 0; i < BUTTON_COUNT; i++) {
+			input.buttons[i].changed = false;
+		}
+
 		while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&message);
-			DispatchMessage(&message);
+		
+			switch (message.message) {
+			case WM_KEYUP:
+			case WM_KEYDOWN: {
+				u32 vk_code = (u32)message.wParam;
+				bool is_down = ((message.lParam & (1 << 31)) == 0);
+
+				switch (vk_code) {
+					case VK_UP: {
+						input.buttons[BUTTON_UP].is_down = is_down;
+						input.buttons[BUTTON_UP].changed = true;
+					} break;
+				}
+			} break;
+
+			default: {
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
+		}
+
+			
 		}
 
 
 		//Simulate - All game functions will be done here. It simulates what happens and what should be shown.
+		
+		
+		
 		clear_screen(); //Clears the previous frame by rendering a new background over the previouse frame "clearing" the screen
-		draw_rect(0, 0, 1, 1, 0xff0000);
+		if (input.buttons[BUTTON_UP].is_down) {
+			draw_rect(0, 0, 1, 1, 0xff0000);
+		}
+		
 
 
 
