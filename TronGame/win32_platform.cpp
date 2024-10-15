@@ -11,11 +11,18 @@ global_variable Render_State render_state;
 
 #include "platform_common.cpp"
 #include "renderer.cpp"
+#include "game.cpp"
 /*
 Since we include renderer.cpp AFTER creating render_state, the renderer.cpp can use render_state without passing variables.
 */
 global_variable bool running = true;
 
+
+#define process_button(b, vk)\
+				case vk: { \
+				input.buttons[b].is_down = is_down; \
+					input.buttons[b].changed = true; \
+				}break;
 
 LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	LRESULT result = 0;
@@ -83,11 +90,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 				u32 vk_code = (u32)message.wParam;
 				bool is_down = ((message.lParam & (1 << 31)) == 0);
 
+				
+
 				switch (vk_code) {
-					case VK_UP: {
-						input.buttons[BUTTON_UP].is_down = is_down;
-						input.buttons[BUTTON_UP].changed = true;
-					} break;
+					process_button(BUTTON_UP, VK_UP);
+					process_button(BUTTON_DOWN, VK_DOWN);
+					process_button(BUTTON_LEFT, VK_LEFT);
+					process_button(BUTTON_RIGHT, VK_RIGHT);
+
 				}
 			} break;
 
@@ -102,13 +112,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 
 		//Simulate - All game functions will be done here. It simulates what happens and what should be shown.
+		simulate_game(&input);
 		
 		
 		
-		clear_screen(); //Clears the previous frame by rendering a new background over the previouse frame "clearing" the screen
-		if (input.buttons[BUTTON_UP].is_down) {
-			draw_rect(0, 0, 1, 1, 0xff0000);
-		}
 		
 
 
