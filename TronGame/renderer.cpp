@@ -31,10 +31,10 @@ global_variable float render_scale = 0.01f;
 
 internal void draw_rect(float x, float y, float half_size_x, float half_size_y, u32 color) {
 	
-	x *= render_state.height * render_scale;
-	y *= render_state.height * render_scale;
-	half_size_x *= render_state.height * render_scale;
-	half_size_y *= render_state.height * render_scale;
+	x *= render_state.height *render_scale;
+	y *= render_state.height *render_scale;
+	half_size_x *= render_state.height *render_scale;
+	half_size_y *= render_state.height *render_scale;
 
 	x += render_state.width / 2.f;
 	y += render_state.height / 2.f;

@@ -18,7 +18,7 @@ global_variable Render_State render_state;
 Since we include renderer.cpp AFTER creating render_state, the renderer.cpp can use render_state without passing variables.
 */
 global_variable bool running = true;
-
+global_variable bool paused = false;
 
 #define process_button(b, vk)\
 				case vk: { \
@@ -76,7 +76,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 	Input input = {};
 
-	//
+	//Part of calculating how time is being handled.
 	float delta_time = 0.016666f;
 	LARGE_INTEGER frame_begin_time;
 	QueryPerformanceCounter(&frame_begin_time);
@@ -88,64 +88,63 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	}
 
 
-	//Begin game loop
-	while (running) {
-		//inputs
-		MSG message;
+		while (running) {
+			//inputs
+			MSG message;
 
-		for (int i = 0; i < BUTTON_COUNT; i++) {
-			input.buttons[i].changed = false;
-		}
-
-		while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
-		
-			switch (message.message) {
-			case WM_KEYUP:
-			case WM_KEYDOWN: {
-				u32 vk_code = (u32)message.wParam;
-				bool is_down = ((message.lParam & (1 << 31)) == 0);
-
-				
-
-				switch (vk_code) {//Add buttons and what they register as here
-					process_button(BUTTON_UP, VK_UP);
-					process_button(BUTTON_DOWN, VK_DOWN);
-					process_button(BUTTON_LEFT, VK_LEFT);
-					process_button(BUTTON_RIGHT, VK_RIGHT);
-					process_button(BUTTON_A, 'A');
-					process_button(BUTTON_W, 'W');
-					process_button(BUTTON_D, 'D');
-					process_button(BUTTON_S, 'S');
-				}
-			} break;
-
-			default: {
-				TranslateMessage(&message);
-				DispatchMessage(&message);
+			for (int i = 0; i < BUTTON_COUNT; i++) {
+				input.buttons[i].changed = false;
 			}
+
+			while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
+
+				switch (message.message) {
+				case WM_KEYUP:
+				case WM_KEYDOWN: {
+					u32 vk_code = (u32)message.wParam;
+					bool is_down = ((message.lParam & (1 << 31)) == 0);
+
+
+
+					switch (vk_code) {//Add buttons and what they register as here
+						process_button(BUTTON_UP, VK_UP);
+						process_button(BUTTON_DOWN, VK_DOWN);
+						process_button(BUTTON_LEFT, VK_LEFT);
+						process_button(BUTTON_RIGHT, VK_RIGHT);
+						process_button(BUTTON_A, 'A');
+						process_button(BUTTON_W, 'W');
+						process_button(BUTTON_D, 'D');
+						process_button(BUTTON_S, 'S');
+					}
+				} break;
+
+				default: {
+					TranslateMessage(&message);
+					DispatchMessage(&message);
+				}
+				}
+
+
+			}
+
+
+			//Simulate - All game functions will be done here. It simulates what happens and what should be shown.
+			simulate_game(&input, delta_time);
+
+
+
+
+
+
+
+			//Render
+			StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
+
+			//Gets the end frame data and caculates how long it took to render a frame. This keep movement speed consistent when resizing the window
+			LARGE_INTEGER frame_end_time;
+			QueryPerformanceCounter(&frame_end_time);
+			delta_time = (float)(frame_end_time.QuadPart - frame_begin_time.QuadPart) / performance_frequency;
+			frame_begin_time = frame_end_time;
+
 		}
-
-			
-		}
-
-
-		//Simulate - All game functions will be done here. It simulates what happens and what should be shown.
-		simulate_game(&input, delta_time);
-		
-		
-		
-		
-
-
-
-		//Render
-		StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
-
-		//Gets the end frame data and caculates how long it took to render a frame. This keep movement speed consistent when resizing the window
-		LARGE_INTEGER frame_end_time;
-		QueryPerformanceCounter(&frame_end_time);
-		delta_time = (float)(frame_end_time.QuadPart - frame_begin_time.QuadPart) / performance_frequency;
-		frame_begin_time = frame_end_time;
-
-	}
 };
